@@ -1,0 +1,29 @@
+{
+	"name": "@cpzombie/pi-settings",
+	"version": "0.1.0",
+	"description": "pi coding agent extensions: raw token context counter footer, plus a setup sync that seeds personal model (local llama-cpp) and compaction settings",
+	"keywords": [
+		"pi-package",
+		"pi-extension"
+	],
+	"license": "GPL-3.0",
+	"type": "module",
+	"files": [
+		"extensions",
+		"setup",
+		"README.md"
+	],
+	"engines": {
+		"node": ">=22.19.0"
+	},
+	"pi": {
+		"extensions": [
+			"./extensions"
+		]
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-ai": "*",
+		"@earendil-works/pi-coding-agent": "*",
+		"@earendil-works/pi-tui": "*"
+	}
+}
