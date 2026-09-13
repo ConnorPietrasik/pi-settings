@@ -60,7 +60,7 @@ machine without one the model will appear in `/model` but not connect.
 ```bash
 pi install npm:@cpzombie/pi-settings
 # or pinned to a version:
-pi install npm:@cpzombie/pi-settings@0.1.0
+pi install npm:@cpzombie/pi-settings@1.0.0
 ```
 
 Uninstall (or `pi remove` then `/reload` in an interactive session):
