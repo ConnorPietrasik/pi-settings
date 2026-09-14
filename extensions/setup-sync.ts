@@ -23,8 +23,9 @@
  *   2. otherwise, in the interactive TUI, the user is prompted once for the
  *      address (Esc falls back to the bundled default)
  *   3. otherwise the bundled default is used
- * After seeding, the address is only changed via the /llm-setup command
- * (set a new address, or remove the provider).
+ * After seeding, the entry is managed via the /llm-setup command:
+ * set a new address, force-update the provider from the bundled config
+ * (e.g. after a package update), or remove the provider.
  *
  * When everything is already in place this is a silent no-op (a few file
  * reads). New values take effect on the next pi start.
@@ -181,6 +182,32 @@ export function setLlmBaseUrl(agentDir: string, baseUrl: string): void {
 	writeJson(modelsPath, current);
 }
 
+/**
+ * Replace the llama-cpp provider entry with the bundled definition so that
+ * updated values from setup/models.json (contextWindow, maxTokens, models,
+ * ...) take effect on an existing install. The user's current baseUrl is
+ * preserved, since it is machine-specific. Returns true if the provider was
+ * written.
+ */
+export function resetLlmProviderToBundled(agentDir: string): boolean {
+	const bundledDef = bundledProviders()?.[LLM_PROVIDER];
+	if (!isPlainObject(bundledDef)) return false;
+
+	const modelsPath = join(agentDir, "models.json");
+	const current = userModels(agentDir);
+	if (!isPlainObject(current.providers)) current.providers = {};
+
+	const existing = current.providers[LLM_PROVIDER];
+	const next: Json = { ...bundledDef };
+	if (isPlainObject(existing) && typeof existing.baseUrl === "string" && existing.baseUrl.length > 0) {
+		next.baseUrl = existing.baseUrl;
+	}
+	current.providers[LLM_PROVIDER] = next;
+
+	writeJson(modelsPath, current);
+	return true;
+}
+
 /** Remove the llama-cpp provider. Returns true if it existed and was removed. */
 export function removeLlmProvider(agentDir: string): boolean {
 	const modelsPath = join(agentDir, "models.json");
@@ -236,11 +263,12 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.registerCommand("llm-setup", {
-		description: "Set or remove the local llama-cpp LLM server address",
+		description: "Set, force-update, or remove the local llama-cpp LLM server config",
 		handler: async (_args, ctx) => {
 			const agentDir = getAgentDir();
 			const choice = await ctx.ui.select("Local LLM server (llama-cpp)", [
 				"Set a new address",
+				"Force-update from bundled config",
 				"Remove the provider",
 				"Cancel",
 			]);
@@ -253,6 +281,19 @@ export default function (pi: ExtensionAPI) {
 				}
 				setLlmBaseUrl(agentDir, answer.trim());
 				ctx.ui.notify(`llama-cpp baseUrl set to ${answer.trim()}. Restart pi to apply.`, "info");
+			} else if (choice === "Force-update from bundled config") {
+				const ok = await ctx.ui.confirm(
+					"Force-update llama-cpp from bundled config?",
+					"The bundled provider definition replaces the current entry (models, contextWindow, maxTokens, ...). Your server address (baseUrl) is kept.",
+				);
+				if (!ok) return;
+				const done = resetLlmProviderToBundled(agentDir);
+				ctx.ui.notify(
+					done
+						? "llama-cpp provider reset to bundled config (baseUrl preserved). Restart pi to apply."
+						: "No bundled llama-cpp definition found in setup/models.json — nothing to do.",
+					done ? "info" : "warning",
+				);
 			} else if (choice === "Remove the provider") {
 				const ok = await ctx.ui.confirm(
 					"Remove llama-cpp provider?",

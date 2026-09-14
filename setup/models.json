@@ -8,7 +8,8 @@
 				{
 					"id": "Qwen3.8-27B-Q8",
 					"input": ["text", "image"],
-					"contextWindow": 220000
+					"contextWindow": 220000,
+					"maxTokens": 200000
 				}
 			]
 		}

@@ -43,14 +43,18 @@ first seeded on a machine:
    keep the default
 3. a non-interactive first run with no env var gets the bundled default
    (`http://localhost:8080/v1`)
-4. afterwards, use the **`/llm-setup`** command to set a new address or
-   remove the provider entirely
+4. afterwards, use the **`/llm-setup`** command to set a new address,
+   force-update the provider from the bundled config, or remove it entirely
 
 If the provider is already defined in your `models.json`, nothing is asked
 and nothing is changed.
 
 Edit the JSON files under `setup/` in this repo and bump the version to
-change what gets seeded — or just edit your local files directly to override.
+change what gets seeded — or just edit your local files directly to
+override. Because of the never-clobber merge rules, updated bundled values
+do not propagate to machines that already have the provider seeded: use
+**`/llm-setup` → “Force-update from bundled config”** to replace the
+provider entry with the bundled definition (your `baseUrl` is preserved).
 
 Note: the bundled model config points at a **local** llama-cpp server; on a
 machine without one the model will appear in `/model` but not connect.
